@@ -1,0 +1,6 @@
+# Folders
+bin/
+.vscode/
+
+# Files
+*.cfg
