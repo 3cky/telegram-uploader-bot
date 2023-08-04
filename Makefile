@@ -19,7 +19,7 @@ GOBUILD_LDFLAGS_STATIC := -ldflags "-linkmode external -extldflags \"-static\" -
 default: install
 
 install:
-	go get -x $(GOBUILD_LDFLAGS) -t -v ./...
+	go install -x $(GOBUILD_LDFLAGS) -v
 
 build:
 	go build -x $(GOBUILD_LDFLAGS) -v -o $(BINDIR)/$(PKG_NAME)
