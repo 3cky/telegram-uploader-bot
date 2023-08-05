@@ -37,11 +37,11 @@ type Uploader struct {
 }
 
 type Task struct {
-	id        uint
-	watcher   *watcher.Watcher
-	chatId    int64
-	documents bool
-	taggers   []tagger.Taggable
+	id       uint
+	watcher  *watcher.Watcher
+	chatId   int64
+	document bool
+	taggers  []tagger.Taggable
 }
 
 func NewUploader(config *config.Config) (*Uploader, error) {
@@ -89,11 +89,11 @@ func NewUploader(config *config.Config) (*Uploader, error) {
 		}
 
 		task := &Task{
-			id:        id,
-			watcher:   w,
-			chatId:    u.ChatId,
-			documents: u.Documents,
-			taggers:   tags,
+			id:       id,
+			watcher:  w,
+			chatId:   u.ChatId,
+			document: u.Document,
+			taggers:  tags,
 		}
 		tasks = append(tasks, task)
 
@@ -136,7 +136,7 @@ func (u *Uploader) Start() {
 			for _, tg := range t.taggers {
 				tags = append(tags, tg.Tags(fp)...)
 			}
-			if err := u.tgBot.UploadFile(t.chatId, fp, t.documents, tags...); err != nil {
+			if err := u.tgBot.UploadFile(t.chatId, fp, t.document, tags...); err != nil {
 				glog.Errorf("can't upload file %s to chat %d: %v", e.Path, t.chatId, err)
 			}
 			continue

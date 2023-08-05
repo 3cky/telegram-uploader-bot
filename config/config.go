@@ -44,7 +44,7 @@ type Upload struct {
 	Directory    string
 	FilePatterns []string `mapstructure:"files"`
 	ChatId       int64    `mapstructure:"chat"`
-	Documents    bool
+	Document     bool
 	Tags         Tags
 }
 

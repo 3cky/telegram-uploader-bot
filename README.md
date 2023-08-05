@@ -42,7 +42,7 @@ uploads:
   - directory: "/path/to/watch/dir"
     files:
       - "*.jpg" # file name match by the mask is case insensitive
-    documents: false # set to true to upload files as documents (without reencoding)
+    document: false # set to true to upload files as documents (without reencoding)
     chat: 1234567
     tags:
       plain:
