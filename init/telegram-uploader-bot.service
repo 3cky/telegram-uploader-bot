@@ -1,0 +1,18 @@
+[Unit]
+Description=Monitors directories for new files and uploads them to Telegram chats
+Documentation=https://github.com/3cky/telegram-uploader-bot
+Wants=network.target
+After=network.target
+
+[Service]
+Type=simple
+#User=myuser
+#Group=mygroup
+ExecStart=/usr/local/bin/telegram-uploader-bot $BOT_EXEC_OPTIONS
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
