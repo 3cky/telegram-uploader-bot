@@ -17,6 +17,7 @@ package config
 import (
 	"fmt"
 
+	"github.com/c2h5oh/datasize"
 	"github.com/golang/glog"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
@@ -42,8 +43,10 @@ type Telegram struct {
 
 type Upload struct {
 	Directory    string
-	FilePatterns []string `mapstructure:"files"`
-	ChatId       int64    `mapstructure:"chat"`
+	FilePatterns []string          `mapstructure:"files"`
+	MinSize      datasize.ByteSize `mapstructure:"min_size"`
+	MaxSize      datasize.ByteSize `mapstructure:"max_size"`
+	ChatId       int64             `mapstructure:"chat"`
 	Document     bool
 	Tags         Tags
 }
@@ -67,7 +70,7 @@ func NewConfig(cmd *cobra.Command) (*Config, error) {
 	// Parse config
 	err = viper.Unmarshal(&config, func(m *mapstructure.DecoderConfig) {
 		m.ErrorUnused = true
-	})
+	}, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc()))
 	if err != nil {
 		return nil, err
 	}

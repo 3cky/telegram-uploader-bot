@@ -23,6 +23,7 @@ require (
 
 require (
 	github.com/antonmedv/expr v1.12.7
+	github.com/c2h5oh/datasize v0.0.0-20220606134207-859f65c6625b
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/golang/glog v1.1.1

@@ -49,7 +49,7 @@ func NewBot(token string) (*Bot, error) {
 }
 
 func (b *Bot) UploadFile(chatId int64, filePath string, document bool, tags ...string) error {
-	glog.V(4).Infof("upload file %s with tags: %v", filePath, tags)
+	glog.V(4).Infof("uploading file %s with tags %v to chat %d", filePath, tags, chatId)
 
 	// Convert tags to hashtags
 	ht := strings.Join(tags, " #")

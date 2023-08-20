@@ -43,6 +43,8 @@ uploads:
     files:
       - "*.jpg" # file name match by the mask is case insensitive
     document: false # set to true to upload files as documents (without reencoding)
+    min_size: 0 # min file size limit to upload (default is 0 - no limit)
+    max_size: 50 MB # max file size limit to upload (default is 50 MB)
     chat: 1234567
     tags:
       plain:

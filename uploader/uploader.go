@@ -16,6 +16,7 @@ package uploader
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/golang/glog"
 
@@ -24,6 +25,8 @@ import (
 	"github.com/3cky/telegram-uploader-bot/tagger"
 	"github.com/3cky/telegram-uploader-bot/watcher"
 )
+
+const MAX_UPLOAD_SIZE = 50 * 1024 * 1024 // 50 MB is default Telegram API file size limit
 
 type Uploader struct {
 	tgBot *bot.Bot
@@ -39,6 +42,8 @@ type Uploader struct {
 type Task struct {
 	id       uint
 	watcher  *watcher.Watcher
+	minSize  uint64
+	maxSize  uint64
 	chatId   int64
 	document bool
 	taggers  []tagger.Taggable
@@ -61,6 +66,16 @@ func NewUploader(config *config.Config) (*Uploader, error) {
 	tasks := make([]*Task, 0)
 	var id uint
 	for _, u := range config.Uploads {
+		// Check file size limits
+		minSize := u.MinSize.Bytes()
+		maxSize := u.MaxSize.Bytes()
+		if maxSize == 0 {
+			maxSize = MAX_UPLOAD_SIZE
+		}
+		if minSize > maxSize {
+			return nil, fmt.Errorf("max upload size (%d) must not be less than min size (%d)", maxSize, minSize)
+		}
+
 		// Create task taggables
 		tags := make([]tagger.Taggable, 0)
 		pt, err := tagger.NewPlainTagger(u.Tags.Plain)
@@ -91,6 +106,8 @@ func NewUploader(config *config.Config) (*Uploader, error) {
 		task := &Task{
 			id:       id,
 			watcher:  w,
+			minSize:  minSize,
+			maxSize:  maxSize,
 			chatId:   u.ChatId,
 			document: u.Document,
 			taggers:  tags,
@@ -132,10 +149,26 @@ func (u *Uploader) Start() {
 			fp := e.Path
 			glog.V(4).Infof("new file to upload: %s", fp)
 			t := u.tasks[e.Id]
+			// Check file size
+			fi, err := os.Stat(fp)
+			if err != nil {
+				glog.Errorf("can't stat file to upload %s: %v", fp, err)
+				continue
+			}
+			if fi.Size() < int64(t.minSize) {
+				glog.V(3).Infof("skipping uploading of too small file (%d byte(s)): %s", fi.Size(), fp)
+				continue
+			}
+			if fi.Size() > int64(t.maxSize) {
+				glog.Warningf("skipping uploading of too big file (%d byte(s)): %s", fi.Size(), fp)
+				continue
+			}
+			// Get file tags
 			tags := make([]string, 0)
 			for _, tg := range t.taggers {
 				tags = append(tags, tg.Tags(fp)...)
 			}
+			// Upload file to Telegram
 			if err := u.tgBot.UploadFile(t.chatId, fp, t.document, tags...); err != nil {
 				glog.Errorf("can't upload file %s to chat %d: %v", e.Path, t.chatId, err)
 			}
