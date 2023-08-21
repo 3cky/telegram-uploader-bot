@@ -15,6 +15,7 @@
 package uploader
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -29,14 +30,15 @@ import (
 const MAX_UPLOAD_SIZE = 50 * 1024 * 1024 // 50 MB is default Telegram API file size limit
 
 type Uploader struct {
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+
 	tgBot *bot.Bot
 
 	tasks []*Task
 
 	eventCh chan watcher.Event
-
-	stopCh chan struct{}
-	doneCh chan struct{}
+	doneCh  chan struct{}
 }
 
 type Task struct {
@@ -49,7 +51,7 @@ type Task struct {
 	taggers  []tagger.Taggable
 }
 
-func NewUploader(config *config.Config) (*Uploader, error) {
+func NewUploader(ctx context.Context, config *config.Config) (*Uploader, error) {
 	// Check telegram bot token is set and is not empty
 	if config.Telegram.Token == "" {
 		return nil, fmt.Errorf("telegram bot token is not set or empty")
@@ -120,15 +122,18 @@ func NewUploader(config *config.Config) (*Uploader, error) {
 		return nil, fmt.Errorf("no directories to watch for new files")
 	}
 
-	stopCh := make(chan struct{})
+	// Create cancelable context
+	ctxWithCancel, ctxCancel := context.WithCancel(ctx)
+
 	doneCh := make(chan struct{})
 
 	return &Uploader{
-		tgBot:   tgBot,
-		tasks:   tasks,
-		eventCh: eventCh,
-		stopCh:  stopCh,
-		doneCh:  doneCh,
+		ctx:       ctxWithCancel,
+		ctxCancel: ctxCancel,
+		tgBot:     tgBot,
+		tasks:     tasks,
+		eventCh:   eventCh,
+		doneCh:    doneCh,
 	}, nil
 }
 
@@ -137,6 +142,7 @@ func (u *Uploader) Start() {
 
 	defer close(u.eventCh)
 	defer close(u.doneCh)
+	defer u.ctxCancel()
 	defer glog.V(1).Infoln("file uploader stopped")
 
 	for _, t := range u.tasks {
@@ -169,11 +175,11 @@ func (u *Uploader) Start() {
 				tags = append(tags, tg.Tags(fp)...)
 			}
 			// Upload file to Telegram
-			if err := u.tgBot.UploadFile(t.chatId, fp, t.document, tags...); err != nil {
+			if err := u.tgBot.UploadFile(u.ctx, t.chatId, fp, t.document, tags...); err != nil {
 				glog.Errorf("can't upload file %s to chat %d: %v", e.Path, t.chatId, err)
 			}
 			continue
-		case <-u.stopCh:
+		case <-u.ctx.Done():
 			return
 		}
 	}
@@ -184,6 +190,6 @@ func (u *Uploader) Stop() {
 	for _, t := range u.tasks {
 		t.watcher.Stop()
 	}
-	close(u.stopCh)
+	u.ctxCancel()
 	<-u.doneCh
 }

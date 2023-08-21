@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -100,7 +101,9 @@ func runCmd(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	uploader, err := uploaderpkg.NewUploader(config)
+	ctx := context.Background()
+
+	uploader, err := uploaderpkg.NewUploader(ctx, config)
 	if err != nil {
 		glog.Errorf("config couldn't be used: %v", err)
 		return
@@ -134,7 +137,7 @@ func runCmd(cmd *cobra.Command, _ []string) {
 				glog.Errorf("config reloading error: %v", err)
 				continue
 			}
-			newUploader, err := uploaderpkg.NewUploader(config)
+			newUploader, err := uploaderpkg.NewUploader(ctx, config)
 			if err != nil {
 				glog.Errorf("reloaded config can't be used: %v", err)
 				continue

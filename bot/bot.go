@@ -15,8 +15,12 @@
 package bot
 
 import (
+	"context"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"golang.org/x/time/rate"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/golang/glog"
@@ -29,6 +33,8 @@ type Chat struct {
 
 type Bot struct {
 	botApi *tgbotapi.BotAPI
+
+	rateLimiter *rate.Limiter
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -43,12 +49,16 @@ func NewBot(token string) (*Bot, error) {
 		return nil, err
 	}
 
+	// Create rate limiter (one request per second w/ burst 5 rps)
+	rateLimiter := rate.NewLimiter(rate.Every(time.Second), 5)
+
 	return &Bot{
-		botApi: botApi,
+		botApi:      botApi,
+		rateLimiter: rateLimiter,
 	}, nil
 }
 
-func (b *Bot) UploadFile(chatId int64, filePath string, document bool, tags ...string) error {
+func (b *Bot) UploadFile(ctx context.Context, chatId int64, filePath string, document bool, tags ...string) error {
 	glog.V(4).Infof("uploading file %s with tags %v to chat %d", filePath, tags, chatId)
 
 	// Convert tags to hashtags
@@ -66,7 +76,12 @@ func (b *Bot) UploadFile(chatId int64, filePath string, document bool, tags ...s
 		m = b.getDocumentMessage(chatId, fp, ht)
 	}
 
-	_, err := b.botApi.Send(m)
+	err := b.rateLimiter.Wait(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = b.botApi.Send(m)
 
 	return err
 }
