@@ -24,7 +24,7 @@ jobs:
         run: |
           git fetch -a
           version=$(git describe --always --dirty --tags)
-          timestamp=$(date -u '+%Y-%m-%d_%I:%M:%S%p)
+          timestamp=$(date -u '+%Y-%m-%d_%I:%M:%S%p')
           echo "Build version: $version"
           echo "Build timestamp: $timestamp"
           
