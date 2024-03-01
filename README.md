@@ -1,5 +1,11 @@
 # telegram-uploader-bot
 
+[![Build Status](https://img.shields.io/github/actions/workflow/status/3cky/telegram-uploader-bot/docker-publish.yml?logo=github&branch=main&style=for-the-badge)](https://github.com/3cky/telegram-uploader-bot/actions/workflows/docker-publish.yml)
+[![Release](https://img.shields.io/github/release/3cky/telegram-uploader-bot.svg?logo=github&style=for-the-badge)](https://github.com/3cky/telegram-uploader-bot/releases/latest)
+[![Docker Image Size](https://img.shields.io/docker/image-size/3cky/telegram-uploader-bot/latest?logo=docker&style=for-the-badge)](https://hub.docker.com/r/3cky/telegram-uploader-bot/tags)
+[![Docker Pulls](https://img.shields.io/docker/pulls/3cky/telegram-uploader-bot?label=Pulls&logo=docker&style=for-the-badge)](https://hub.docker.com/r/3cky/telegram-uploader-bot)
+[![Docker Stars](https://img.shields.io/docker/stars/3cky/telegram-uploader-bot?label=Stars&logo=docker&style=for-the-badge)](https://hub.docker.com/r/3cky/telegram-uploader-bot)
+
 Telegram bot written in Go that monitors directories for new files and uploads them to chats.
 
 ## Features
@@ -55,6 +61,25 @@ uploads:
       expr:
         - "(file.Size() > 1024 * 1024) ? 'big' : ''" # tag files bigger than 1 megabyte
 ```
+
+## Docker
+
+You can launch the **telegram-uploader-bot** in Docker container with the following command:
+
+```shell
+docker run -d \
+    --name=telegram-uploader-bot \
+    -v /path/to/config.cfg:/usr/local/etc/telegram-uploader-bot.cfg \
+    -v /path/to/watch/dir:/path/to/watch/dir \
+    3cky/telegram-uploader-bot
+```
+
+Where:
+
+  - `/path/to/config.cfg`: path to telegram-uploader-bot config file in the local filesystem.
+  - `/path/to/watch/dir`: directory to monitor by telegram-uploader-bot, must match uploads directory in config file.
+
+Make sure config file and watched directory are readable by user `nobody`:`nogroup`.
 
 ## Contributing
 
